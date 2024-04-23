@@ -22,50 +22,7 @@ func ConvertToUnixTime(v interface{}) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("input data should be a struct")
 	}
 
-	data := make(map[string]interface{})
-
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Type().Field(i)
-
-		if !field.IsExported() {
-			continue
-		}
-
-		jsonTag := field.Tag.Get("json")
-		if jsonTag == "-" {
-			continue
-		}
-
-		valueField := val.Field(i)
-
-		if valueField.Kind() == reflect.Ptr {
-			if IsOmitEmpty(field) && val.Field(i).IsNil() {
-				continue
-			}
-			valueField = valueField.Elem()
-		} else {
-			if IsOmitEmpty(field) && val.Field(i).IsZero() {
-				continue
-			}
-		}
-
-		if valueField.Kind() == reflect.Struct {
-			if field.Anonymous {
-				for k, v := range GetStructWithUnixTime(valueField) {
-					data[k] = v
-				}
-			} else {
-				structField := GetStructWithUnixTime(valueField)
-				data[jsonTag] = structField
-			}
-		} else if valueField.Type() == reflect.TypeOf(time.Time{}) {
-			data[jsonTag] = valueField.Interface().(time.Time).Unix()
-		} else {
-			data[jsonTag] = valueField.Interface()
-		}
-	}
-
-	return data, nil
+	return GetStructWithUnixTime(val), nil
 }
 
 func GetStructWithUnixTime(value reflect.Value) map[string]interface{} {
@@ -96,8 +53,21 @@ func GetStructWithUnixTime(value reflect.Value) map[string]interface{} {
 			}
 		}
 
-		if valueField.Kind() == reflect.Struct {
-			if field.Type.Name() == "" {
+		if !valueField.IsValid() {
+			continue
+		}
+
+		jsonTag = strings.Split(jsonTag, ",")[0]
+
+		switch {
+		case valueField.Type() == reflect.TypeOf(time.Time{}):
+			data[jsonTag] = valueField.Interface().(time.Time).Unix()
+
+		case valueField.Kind() == reflect.Slice:
+			data[jsonTag] = GetArrayWithUnixTime(valueField)
+
+		case valueField.Kind() == reflect.Struct:
+			if field.Anonymous {
 				for k, v := range GetStructWithUnixTime(valueField) {
 					data[k] = v
 				}
@@ -105,14 +75,34 @@ func GetStructWithUnixTime(value reflect.Value) map[string]interface{} {
 				structField := GetStructWithUnixTime(valueField)
 				data[jsonTag] = structField
 			}
-		} else if valueField.Type() == reflect.TypeOf(time.Time{}) {
-			data[jsonTag] = valueField.Interface().(time.Time).Unix()
-		} else {
+
+		default:
 			data[jsonTag] = valueField.Interface()
 		}
 	}
 
 	return data
+}
+
+func GetArrayWithUnixTime(value reflect.Value) []interface{} {
+	sliceData := make([]interface{}, value.Len())
+
+	for j := 0; j < value.Len(); j++ {
+		sliceElem := value.Index(j)
+
+		switch {
+		case sliceElem.Type() == reflect.TypeOf(time.Time{}):
+			sliceData[j] = sliceElem.Interface().(time.Time).Unix()
+
+		case sliceElem.Kind() == reflect.Struct:
+			sliceData[j] = GetStructWithUnixTime(sliceElem)
+
+		default:
+			sliceData[j] = sliceElem.Interface()
+		}
+	}
+
+	return sliceData
 }
 
 func IsOmitEmpty(field reflect.StructField) bool {
