@@ -32,7 +32,7 @@ if err != nil {
     log.Fatal(err)
 }
 
-fmt.Println(result)
+fmt.Println(result) // map[created_at:1713840688 name:Test]
 ```
 
 In the output map, the `created_at` field will be represented as Unix time.
