@@ -8,10 +8,14 @@ import (
 )
 
 func ConvertToUnixTime(v interface{}) (map[string]interface{}, error) {
+	if v == nil {
+		return nil, fmt.Errorf("input data is nil")
+	}
+
 	val := reflect.ValueOf(v)
 
 	if val.IsZero() {
-		return nil, fmt.Errorf("input data is nil")
+		return nil, fmt.Errorf("input data is zero")
 	}
 
 	if val.Kind() == reflect.Ptr {
