@@ -1,3 +1,5 @@
+[![Tests](https://github.com/Totus-Floreo/freak-conventer/actions/workflows/tests.yml/badge.svg)](https://github.com/Totus-Floreo/freak-conventer/actions/workflows/tests.yml)
+
 # Project Title: Unix Time Converter
 
 This project is a Go module that provides functionality to convert Go struct fields of type `time.Time` to Unix time (the number of seconds elapsed since January 1, 1970 UTC). The module uses reflection to traverse the struct fields and perform the conversion.
