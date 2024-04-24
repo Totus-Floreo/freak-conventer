@@ -36,9 +36,33 @@ type AnonStructField struct {
 	IntField  int64     `json:"intField"`
 	TimeField time.Time `json:"timeField"`
 }
+
 type TestStructWithAnonStruct struct {
 	IntField int64 `json:"intField"`
 	AnonStructField
+}
+
+type TestStructWithUnexportedField struct {
+	intField    int64     `json:"intField"`
+	StringField string    `json:"stringField"`
+	TimeField   time.Time `json:"timeField"`
+	dateField   time.Time `json:"dateField"`
+}
+
+type TestStructWithSkipJsonTag struct {
+	IntField    int64     `json:"intField"`
+	StringField string    `json:"-"`
+	TimeField   time.Time `json:"timeField"`
+	DateField   time.Time `json:"-"`
+}
+
+type TestStructWithPointer struct {
+	IntField       *int64      `json:"intField"`
+	StringField    *string     `json:"stringField"`
+	DateField      *time.Time  `json:"dateField"`
+	TimeField      *time.Time  `json:"timeField"`
+	NestedField    *TestStruct `json:"nestedField"`
+	NestedNilField *TestStruct `json:"nestedNilField"`
 }
 
 func TestConvertToUnixTime(t *testing.T) {
@@ -210,6 +234,58 @@ func TestConvertToUnixTime(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name: "valid struct with skip json tag",
+			input: TestStructWithSkipJsonTag{
+				IntField:    1,
+				StringField: "TestStruct",
+				TimeField:   time.Unix(1633024862, 0),
+				DateField:   time.Unix(1633024863, 0),
+			},
+			expected: map[string]interface{}{
+				"intField":  int64(1),
+				"timeField": int64(1633024862),
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid struct with unexported field",
+			input: TestStructWithUnexportedField{
+				intField:    1,
+				StringField: "TestStruct",
+				TimeField:   time.Unix(1633024862, 0),
+				dateField:   time.Unix(1633024863, 0),
+			},
+			expected: map[string]interface{}{
+				"stringField": "TestStruct",
+				"timeField":   int64(1633024862),
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid struct with pointer",
+			input: TestStructWithPointer{
+				IntField:    nil,
+				StringField: GetPtr("TestStruct"),
+				DateField:   nil,
+				TimeField:   GetPtr(time.Unix(1633024861, 0)),
+				NestedField: &TestStruct{
+					IntField:    1,
+					StringField: "TestStruct",
+					TimeField:   time.Unix(1633024862, 0),
+				},
+				NestedNilField: nil,
+			},
+			expected: map[string]interface{}{
+				"stringField": "TestStruct",
+				"timeField":   int64(1633024861),
+				"nestedField": map[string]interface{}{
+					"intField":    int64(1),
+					"stringField": "TestStruct",
+					"timeField":   int64(1633024862),
+				},
+			},
+		},
+		{
 			name:        "nil input",
 			input:       nil,
 			expected:    nil,
@@ -236,4 +312,8 @@ func TestConvertToUnixTime(t *testing.T) {
 			assert.Equal(t, tc.expectedErr, err)
 		})
 	}
+}
+
+func GetPtr[T any](value T) *T {
+	return &value
 }
