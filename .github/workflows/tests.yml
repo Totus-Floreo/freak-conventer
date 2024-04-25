@@ -24,3 +24,10 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: Totus-Floreo/freak-conventer
+

@@ -14,9 +14,10 @@ type TestStruct struct {
 }
 
 type TestStructWithOmitempty struct {
-	IntField    int64     `json:"intField"`
-	StringField string    `json:"stringField,omitempty"`
-	TimeField   time.Time `json:"timeField"`
+	IntField       int64     `json:"intField"`
+	StringField    string    `json:"stringField,omitempty"`
+	StringPtrField *string   `json:"stringPtrField,omitempty"`
+	TimeField      time.Time `json:"timeField"`
 }
 
 type TestStructWithNestedStruct struct {
@@ -27,7 +28,8 @@ type TestStructWithNestedStruct struct {
 }
 
 type TestStructWithArray struct {
-	IntField      int64                        `json:"intField"`
+	IntField      []int64                      `json:"intField"`
+	TimeField     []time.Time                  `json:"timeField"`
 	Array         []TestStruct                 `json:"arrayField"`
 	ArrayWithOmni []TestStructWithNestedStruct `json:"arrayOmni"`
 }
@@ -87,6 +89,20 @@ func TestConvertToUnixTime(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name: "valid struct but its ptr",
+			input: &TestStruct{
+				IntField:    1,
+				StringField: "TestStruct",
+				TimeField:   time.Unix(1633024900, 0),
+			},
+			expected: map[string]interface{}{
+				"intField":    int64(1),
+				"stringField": "TestStruct",
+				"timeField":   int64(1633024900),
+			},
+			expectedErr: nil,
+		},
+		{
 			name: "valid struct with omit empty tag",
 			input: TestStructWithOmitempty{
 				IntField:  1,
@@ -131,7 +147,8 @@ func TestConvertToUnixTime(t *testing.T) {
 		{
 			name: "valid struct with array",
 			input: TestStructWithArray{
-				IntField: 1,
+				IntField:  []int64{1, 2},
+				TimeField: []time.Time{time.Unix(1633024860, 0), time.Unix(1633024861, 0)},
 				Array: []TestStruct{
 					{
 						IntField:    2,
@@ -174,7 +191,8 @@ func TestConvertToUnixTime(t *testing.T) {
 				},
 			},
 			expected: map[string]interface{}{
-				"intField": int64(1),
+				"intField":  []interface{}{int64(1), int64(2)},
+				"timeField": []interface{}{int64(1633024860), int64(1633024861)},
 				"arrayField": []interface{}{
 					map[string]interface{}{
 						"intField":    int64(2),

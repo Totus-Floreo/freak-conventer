@@ -1,4 +1,5 @@
 [![Tests](https://github.com/Totus-Floreo/freak-conventer/actions/workflows/tests.yml/badge.svg)](https://github.com/Totus-Floreo/freak-conventer/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/Totus-Floreo/freak-conventer/graph/badge.svg?token=H02NROT5T3)](https://codecov.io/gh/Totus-Floreo/freak-conventer)
 
 # Project Title: Unix Time Converter
 
